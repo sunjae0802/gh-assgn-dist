@@ -1,0 +1,127 @@
+package cmd
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+
+	"github.com/cli/go-gh/v2/pkg/api"
+	"github.com/spf13/cobra"
+	"github.com/sunjae0802/gh-assgn-dist/internal"
+)
+
+var createTemplate string
+var createClassroom string
+var createDryRun bool
+
+var CreateCmd = &cobra.Command{
+	Use:   "create ASSGN",
+	Short: "Create student repos for an assignment",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		assgn := args[0]
+
+		classroomFile := createClassroom
+		if classroomFile == "" {
+			var err error
+			classroomFile, err = internal.FindClassroomFile()
+			if err != nil {
+				return err
+			}
+		}
+
+		c, err := internal.LoadClassroom(classroomFile)
+		if err != nil {
+			return err
+		}
+
+		students, err := internal.LoadRoster(c.Roster)
+		if err != nil {
+			return err
+		}
+
+		template := createTemplate
+		if template == "" {
+			template = assgn
+		}
+
+		client, err := api.DefaultRESTClient()
+		if err != nil {
+			return err
+		}
+
+		// Verify template repo exists
+		templateOwner, templateName, err := splitRepo(template)
+		if err != nil {
+			return err
+		}
+		var templateRepo struct{ FullName string `json:"full_name"` }
+		if err := client.Get(fmt.Sprintf("repos/%s/%s", templateOwner, templateName), &templateRepo); err != nil {
+			return fmt.Errorf("template repo %q not found: %w", template, err)
+		}
+
+		for _, student := range students {
+			repoName := fmt.Sprintf("%s-%s-%s", c.Name, assgn, student.GitHub)
+			org := c.Org
+
+			if createDryRun {
+				fmt.Printf("gh api -X POST /orgs/%s/repos -f name=%s -f private=true -f template_repository=%s/%s\n",
+					org, repoName, templateOwner, templateName)
+				fmt.Printf("gh api -X PUT /repos/%s/%s/collaborators/%s -f permission=write\n",
+					org, repoName, student.GitHub)
+				continue
+			}
+
+			// Create repo from template
+			body := map[string]interface{}{
+				"name":    repoName,
+				"private": true,
+			}
+			bodyBytes, _ := json.Marshal(body)
+			var createdRepo struct{ FullName string `json:"full_name"` }
+			if err := client.Post(fmt.Sprintf("orgs/%s/repos", org), bytes.NewReader(bodyBytes), &createdRepo); err != nil {
+				fmt.Printf("warning: failed to create repo %s: %v\n", repoName, err)
+				continue
+			}
+			fmt.Printf("Created %s\n", createdRepo.FullName)
+
+			// Add student as outside collaborator with write access
+			collabBody := map[string]string{"permission": "write"}
+			collabBytes, _ := json.Marshal(collabBody)
+			var collabResp struct{}
+			if err := client.Put(fmt.Sprintf("repos/%s/%s/collaborators/%s", org, repoName, student.GitHub), bytes.NewReader(collabBytes), &collabResp); err != nil {
+				fmt.Printf("warning: failed to add collaborator %s to %s: %v\n", student.GitHub, repoName, err)
+			} else {
+				fmt.Printf("Added %s as collaborator on %s\n", student.GitHub, repoName)
+			}
+		}
+
+		if !createDryRun {
+			// Save assignment to classroom file
+			c.Assignments = append(c.Assignments, internal.Assignment{
+				Name:     assgn,
+				Template: template,
+			})
+			if err := internal.SaveClassroom(classroomFile, c); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	},
+}
+
+func splitRepo(repo string) (string, string, error) {
+	for i, ch := range repo {
+		if ch == '/' {
+			return repo[:i], repo[i+1:], nil
+		}
+	}
+	return "", "", fmt.Errorf("invalid repo format %q: expected owner/name", repo)
+}
+
+func init() {
+	CreateCmd.Flags().StringVar(&createTemplate, "template", "", "Template repo (owner/name); defaults to assignment name")
+	CreateCmd.Flags().StringVar(&createClassroom, "classroom", "", "Classroom YAML file; defaults to single .yaml in CWD")
+	CreateCmd.Flags().BoolVar(&createDryRun, "dry-run", false, "Print gh api commands without executing")
+}

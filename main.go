@@ -2,25 +2,24 @@ package main
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/cli/go-gh/v2/pkg/api"
+	"github.com/spf13/cobra"
+	"github.com/sunjae0802/gh-assgn-dist/cmd"
 )
 
 func main() {
-	fmt.Println("hi world, this is the gh-assgn-dist extension!")
-	client, err := api.DefaultRESTClient()
-	if err != nil {
-		fmt.Println(err)
-		return
+	root := &cobra.Command{
+		Use:   "assgn-dist",
+		Short: "GitHub Classroom assignment distribution tool",
 	}
-	response := struct {Login string}{}
-	err = client.Get("user", &response)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("running as %s\n", response.Login)
-}
 
-// For more examples of using go-gh, see:
-// https://github.com/cli/go-gh/blob/trunk/example_gh_test.go
+	root.AddCommand(cmd.NewCmd)
+	root.AddCommand(cmd.CreateCmd)
+	root.AddCommand(cmd.StudentReposCmd)
+
+	if err := root.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
