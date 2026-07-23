@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/spf13/cobra"
@@ -61,7 +62,7 @@ var CreateCmd = &cobra.Command{
 		}
 
 		for _, student := range students {
-			repoName := fmt.Sprintf("%s-%s-%s", c.Name, assgn, student.GitHub)
+			repoName := internal.RepoName(c.Name, assgn, student.GitHub)
 			org := c.Org
 
 			if createDryRun {
@@ -112,12 +113,11 @@ var CreateCmd = &cobra.Command{
 }
 
 func splitRepo(repo string) (string, string, error) {
-	for i, ch := range repo {
-		if ch == '/' {
-			return repo[:i], repo[i+1:], nil
-		}
+	owner, name, ok := strings.Cut(repo, "/")
+	if !ok {
+		return "", "", fmt.Errorf("invalid repo format %q: expected owner/name", repo)
 	}
-	return "", "", fmt.Errorf("invalid repo format %q: expected owner/name", repo)
+	return owner, name, nil
 }
 
 func init() {

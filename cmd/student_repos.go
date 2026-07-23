@@ -38,7 +38,7 @@ var StudentReposCmd = &cobra.Command{
 		}
 
 		for _, student := range students {
-			repoName := fmt.Sprintf("%s-%s-%s", c.Name, assgn, student.GitHub)
+			repoName := internal.RepoName(c.Name, assgn, student.GitHub)
 			localDir := repoName
 
 			if _, err := os.Stat(localDir); os.IsNotExist(err) {

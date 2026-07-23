@@ -40,6 +40,12 @@ func SaveClassroom(path string, c *Classroom) error {
 	return os.WriteFile(path, data, 0644)
 }
 
+// RepoName returns the student repo name for a given assignment, following the
+// CLASSROOM-ASSGN-USERNAME convention.
+func RepoName(classroom, assgn, github string) string {
+	return fmt.Sprintf("%s-%s-%s", classroom, assgn, github)
+}
+
 // FindClassroomFile returns the single .yaml file in the current directory,
 // or an error if there are zero or more than one.
 func FindClassroomFile() (string, error) {
