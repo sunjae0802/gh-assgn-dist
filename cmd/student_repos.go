@@ -20,11 +20,7 @@ var StudentReposCmd = &cobra.Command{
 
 		classroomFile := studentReposClassroom
 		if classroomFile == "" {
-			var err error
-			classroomFile, err = internal.FindClassroomFile()
-			if err != nil {
-				return err
-			}
+			classroomFile = internal.DefaultClassroomFile
 		}
 
 		c, err := internal.LoadClassroom(classroomFile)
@@ -61,5 +57,5 @@ var StudentReposCmd = &cobra.Command{
 }
 
 func init() {
-	StudentReposCmd.Flags().StringVar(&studentReposClassroom, "classroom", "", "Classroom YAML file; defaults to single .yaml in CWD")
+	StudentReposCmd.Flags().StringVar(&studentReposClassroom, "classroom", "", "Classroom YAML file (default \"classroom.yaml\")")
 }

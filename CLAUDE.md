@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Files
 
-- **Classroom file**: `CLASSROOM.yaml` — stores class name, GitHub org, roster filename, and list of assignments (each with a short name and template repo)
+- **Classroom file**: `classroom.yaml` by default (override with `--classroom`) — stores class name, GitHub org, and roster filename
 - **Roster file**: CSV with columns: name, email, github username
 
 ### Repo naming convention
@@ -44,6 +44,6 @@ Key behaviors:
 ## Notes
 
 - Withdrawn students remain in the roster file
-- The `--classroom` flag is optional for `create`; defaults to the single `.yaml` file in the current directory
+- The `--classroom` flag is optional for `new`, `create`, and `student-repos`; defaults to `classroom.yaml`
 - The `--template` flag defaults to the assignment short name if omitted
 - The `--dry-run` flag prints the `gh api` commands that will be used

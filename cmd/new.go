@@ -11,6 +11,7 @@ import (
 
 var newOrg string
 var newRoster string
+var newClassroom string
 
 var NewCmd = &cobra.Command{
 	Use:   "new CLASSROOM",
@@ -45,7 +46,10 @@ var NewCmd = &cobra.Command{
 			return fmt.Errorf("user %q does not have admin access to org %q (role: %s)", user.Login, newOrg, membership.Role)
 		}
 
-		outFile := classroom + ".yaml"
+		outFile := newClassroom
+		if outFile == "" {
+			outFile = internal.DefaultClassroomFile
+		}
 		if _, err := os.Stat(outFile); err == nil {
 			return fmt.Errorf("%s already exists", outFile)
 		}
@@ -67,6 +71,7 @@ var NewCmd = &cobra.Command{
 func init() {
 	NewCmd.Flags().StringVar(&newOrg, "org", "", "GitHub organization name (required)")
 	NewCmd.Flags().StringVar(&newRoster, "roster", "", "Path to roster CSV file (required)")
+	NewCmd.Flags().StringVar(&newClassroom, "classroom", "", "Classroom YAML file to write (default \"classroom.yaml\")")
 	NewCmd.MarkFlagRequired("org")
 	NewCmd.MarkFlagRequired("roster")
 }

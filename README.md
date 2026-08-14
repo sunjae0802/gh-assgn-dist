@@ -23,8 +23,8 @@ gh extension install sunjae0802/gh-assgn-dist
   new row; if a student withdraws, just delete the row
 - **Classroom name** — The name of the classroom is used as a prefix. An example would be
   `witcomp1000-fall26`
-- **Classroom file** (`CLASSROOM.yaml`) — created by this extension, and contains class name, GitHub
-  org, and roster path.
+- **Classroom file** (`classroom.yaml` by default; override with `--classroom`) — created by this
+  extension, and contains class name, GitHub org, and roster path.
 - **Student repos** are named `github.com/ORG/CLASSROOM-ASSGN-USERNAME`. For example, if the ORG is
   `witcomp1000`, and classroom name is `witcomp1000-fall26`, assignment name is `a1`, and username
   is `alice`, then the created repo is `github.com/witcomp1000/witcomp1000-fall26-a1-alice`.
@@ -33,7 +33,9 @@ gh extension install sunjae0802/gh-assgn-dist
 
 ### Create a classroom
 
-Verifies the org exists and that you have admin access, then writes `CLASSROOM.yaml`. 
+Verifies the org exists and that you have admin access, then writes the classroom file.
+
+- `--classroom` sets the output path; defaults to `classroom.yaml`.
 
 ```bash
 $ gh assgn-dist new --org ORG --roster roster.csv CLASSROOM
@@ -51,13 +53,13 @@ still (re-)added, so re-running also repairs any invite that failed on a prior r
 students who don't have a repo yet.
 
 - `--template` defaults to the assignment short name (`ASSGN`) if omitted.
-- `--classroom` defaults to the single `.yaml` file in the current directory if omitted.
+- `--classroom` defaults to `classroom.yaml` if omitted.
 - `--dry-run` prints the `gh api` commands instead of running them.
 
 ```bash
-$ gh assgn-dist create --template OWNER/REPO --classroom CLASSROOM.yaml ASSGN
+$ gh assgn-dist create --template OWNER/REPO ASSGN
 # Example:
-$ gh assgn-dist create --template sunjae0802/cs1-a1 --classroom witcomp1000-fall26.yaml a1
+$ gh assgn-dist create --template sunjae0802/cs1-a1 a1
 ```
 
 ### Clone or update student repos
@@ -83,6 +85,6 @@ main.go                  # cobra root command
 cmd/new.go               # `new` subcommand
 cmd/create.go            # `create` subcommand
 cmd/student_repos.go     # `student-repos` subcommand
-internal/classroom.go    # CLASSROOM.yaml read/write
+internal/classroom.go    # classroom.yaml read/write
 internal/roster.go       # CSV roster parsing
 ```

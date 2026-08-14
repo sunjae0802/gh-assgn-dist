@@ -25,11 +25,7 @@ var CreateCmd = &cobra.Command{
 
 		classroomFile := createClassroom
 		if classroomFile == "" {
-			var err error
-			classroomFile, err = internal.FindClassroomFile()
-			if err != nil {
-				return err
-			}
+			classroomFile = internal.DefaultClassroomFile
 		}
 
 		c, err := internal.LoadClassroom(classroomFile)
@@ -142,6 +138,6 @@ func repoExists(client *api.RESTClient, org, name string) (bool, error) {
 
 func init() {
 	CreateCmd.Flags().StringVar(&createTemplate, "template", "", "Template repo (owner/name); defaults to assignment name")
-	CreateCmd.Flags().StringVar(&createClassroom, "classroom", "", "Classroom YAML file; defaults to single .yaml in CWD")
+	CreateCmd.Flags().StringVar(&createClassroom, "classroom", "", "Classroom YAML file (default \"classroom.yaml\")")
 	CreateCmd.Flags().BoolVar(&createDryRun, "dry-run", false, "Print gh api commands without executing")
 }

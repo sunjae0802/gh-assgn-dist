@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -46,57 +45,8 @@ func TestLoadClassroom_MissingFile(t *testing.T) {
 	}
 }
 
-func TestFindClassroomFile(t *testing.T) {
-	t.Run("no yaml files", func(t *testing.T) {
-		chdir(t, t.TempDir())
-		if _, err := FindClassroomFile(); err == nil {
-			t.Fatal("expected error when no .yaml files present, got nil")
-		}
-	})
-
-	t.Run("single yaml file", func(t *testing.T) {
-		dir := t.TempDir()
-		chdir(t, dir)
-		if err := os.WriteFile(filepath.Join(dir, "CLASSROOM.yaml"), []byte(""), 0644); err != nil {
-			t.Fatal(err)
-		}
-		got, err := FindClassroomFile()
-		if err != nil {
-			t.Fatalf("FindClassroomFile() error = %v", err)
-		}
-		if got != "CLASSROOM.yaml" {
-			t.Errorf("FindClassroomFile() = %q, want %q", got, "CLASSROOM.yaml")
-		}
-	})
-
-	t.Run("multiple yaml files", func(t *testing.T) {
-		dir := t.TempDir()
-		chdir(t, dir)
-		for _, name := range []string{"a.yaml", "b.yaml"} {
-			if err := os.WriteFile(filepath.Join(dir, name), []byte(""), 0644); err != nil {
-				t.Fatal(err)
-			}
-		}
-		if _, err := FindClassroomFile(); err == nil {
-			t.Fatal("expected error for multiple .yaml files, got nil")
-		}
-	})
-}
-
-// chdir switches the working directory for the duration of the test and
-// restores it afterward.
-func chdir(t *testing.T, dir string) {
-	t.Helper()
-	orig, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
+func TestDefaultClassroomFile(t *testing.T) {
+	if DefaultClassroomFile != "classroom.yaml" {
+		t.Errorf("DefaultClassroomFile = %q, want %q", DefaultClassroomFile, "classroom.yaml")
 	}
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := os.Chdir(orig); err != nil {
-			t.Fatal(err)
-		}
-	})
 }

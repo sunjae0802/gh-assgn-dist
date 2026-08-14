@@ -3,10 +3,13 @@ package internal
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
+
+// DefaultClassroomFile is the classroom file name used when --classroom is
+// not given.
+const DefaultClassroomFile = "classroom.yaml"
 
 type Classroom struct {
 	Name   string `yaml:"classroom"`
@@ -38,20 +41,4 @@ func SaveClassroom(path string, c *Classroom) error {
 // CLASSROOM-ASSGN-USERNAME convention.
 func RepoName(classroom, assgn, github string) string {
 	return fmt.Sprintf("%s-%s-%s", classroom, assgn, github)
-}
-
-// FindClassroomFile returns the single .yaml file in the current directory,
-// or an error if there are zero or more than one.
-func FindClassroomFile() (string, error) {
-	matches, err := filepath.Glob("*.yaml")
-	if err != nil {
-		return "", err
-	}
-	if len(matches) == 0 {
-		return "", fmt.Errorf("no .yaml file found in current directory")
-	}
-	if len(matches) > 1 {
-		return "", fmt.Errorf("multiple .yaml files found; specify one with --classroom")
-	}
-	return matches[0], nil
 }
