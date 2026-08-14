@@ -18,13 +18,12 @@ gh extension install sunjae0802/gh-assgn-dist
 
 ## Concepts
 
-- **Roster file** — a CSV with columns `name,email,github`. The email column is the "primary key,"
-  meaning you can have multiple students with the same name. If a student is added later, just add a
+- **Roster file** — a CSV with columns `name,email,github`. If a student is added later, just add a
   new row; if a student withdraws, just delete the row
 - **Classroom name** — The name of the classroom is used as a prefix. An example would be
   `witcomp1000-fall26`
 - **Classroom file** (`classroom.yaml` by default; override with `--classroom`) — created by this
-  extension, and contains class name, GitHub org, and roster path.
+  extension, and contains class name, GitHub org, and path to roster file.
 - **Student repos** are named `github.com/ORG/CLASSROOM-ASSGN-USERNAME`. For example, if the ORG is
   `witcomp1000`, and classroom name is `witcomp1000-fall26`, assignment name is `a1`, and username
   is `alice`, then the created repo is `github.com/witcomp1000/witcomp1000-fall26-a1-alice`.
@@ -64,12 +63,13 @@ $ gh assgn-dist create --template sunjae0802/cs1-a1 a1
 
 ### Clone or update student repos
 
-Clones any repo that doesn't exist locally yet; runs `git pull` on any that do.
+Clones any repo that doesn't exist locally yet (into `ASSGN/CLASSROOM-ASSGN-USERNAME`); runs
+`git pull` on any that do.
 
 ```bash
-$ gh assgn-dist student-repos ASSGN
+$ gh assgn-dist clone ASSGN
 # Example:
-$ gh assgn-dist student-repos a1
+$ gh assgn-dist clone a1
 ```
 
 ## Development
@@ -84,7 +84,7 @@ Project layout:
 main.go                  # cobra root command
 cmd/new.go               # `new` subcommand
 cmd/create.go            # `create` subcommand
-cmd/student_repos.go     # `student-repos` subcommand
+cmd/clone.go             # `clone` subcommand
 internal/classroom.go    # classroom.yaml read/write
 internal/roster.go       # CSV roster parsing
 ```

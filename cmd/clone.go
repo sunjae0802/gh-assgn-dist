@@ -4,21 +4,23 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/sunjae0802/gh-assgn-dist/internal"
 )
 
-var studentReposClassroom string
+var cloneClassroom string
 
-var StudentReposCmd = &cobra.Command{
-	Use:   "student-repos ASSGN",
+var CloneCmd = &cobra.Command{
+	Use:   "clone ASSGN",
 	Short: "Clone or update student repos for an assignment",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		assgn := args[0]
 
-		classroomFile := studentReposClassroom
+		classroomFile := cloneClassroom
 		if classroomFile == "" {
 			classroomFile = internal.DefaultClassroomFile
 		}
@@ -35,13 +37,13 @@ var StudentReposCmd = &cobra.Command{
 
 		for _, student := range students {
 			repoName := internal.RepoName(c.Name, assgn, student.GitHub)
-			localDir := repoName
+			localDir := filepath.Join(assgn, repoName)
 
 			if _, err := os.Stat(localDir); os.IsNotExist(err) {
 				fmt.Printf("Cloning %s/%s...\n", c.Org, repoName)
 				out, err := exec.Command("gh", "repo", "clone", fmt.Sprintf("%s/%s", c.Org, repoName), localDir).CombinedOutput()
 				if err != nil {
-					fmt.Printf("warning: failed to clone %s: %v\n%s\n", repoName, err, out)
+					fmt.Println(cloneWarning(c.Org, repoName, out))
 				}
 			} else {
 				fmt.Printf("Pulling %s...\n", repoName)
@@ -56,6 +58,14 @@ var StudentReposCmd = &cobra.Command{
 	},
 }
 
+// cloneWarning turns gh's raw clone output into a short, friendly warning.
+func cloneWarning(org, repoName string, out []byte) string {
+	if strings.Contains(string(out), "Could not resolve to a Repository") {
+		return fmt.Sprintf("warning: repository `%s/%s` not found", org, repoName)
+	}
+	return fmt.Sprintf("warning: failed to clone %s/%s: %s", org, repoName, strings.TrimSpace(string(out)))
+}
+
 func init() {
-	StudentReposCmd.Flags().StringVar(&studentReposClassroom, "classroom", "", "Classroom YAML file (default \"classroom.yaml\")")
+	CloneCmd.Flags().StringVar(&cloneClassroom, "classroom", "", "Classroom YAML file (default \"classroom.yaml\")")
 }

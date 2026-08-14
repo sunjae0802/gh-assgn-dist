@@ -16,7 +16,7 @@ func main() {
 
 	root.AddCommand(cmd.NewCmd)
 	root.AddCommand(cmd.CreateCmd)
-	root.AddCommand(cmd.StudentReposCmd)
+	root.AddCommand(cmd.CloneCmd)
 
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

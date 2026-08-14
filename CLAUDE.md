@@ -28,8 +28,8 @@ assgn-dist new --org ORG --roster CSVFILE CLASSROOM
 # Create an assignment (verifies template repo exists, creates student repos, adds students as outside collaborators with write role)
 assgn-dist create --template REPO --classroom CLASSROOM ASSGN
 
-# Clone or update student repos for an assignment
-assgn-dist student-repos ASSGN
+# Clone or update student repos for an assignment (into ASSGN/CLASSROOM-ASSGN-USERNAME)
+assgn-dist clone ASSGN
 ```
 
 ## GitHub API Usage
@@ -39,11 +39,11 @@ All GitHub operations go through `gh api`. Reference: https://cli.github.com/man
 Key behaviors:
 - `new`: verify org exists + user has admin access via `gh api`
 - `create`: verify template repo exists, then create per-student repos and add each student as outside collaborator with `write` role
-- `student-repos`: clone repos if missing, pull if they already exist
+- `clone`: clone repos if missing, pull if they already exist
 
 ## Notes
 
 - Withdrawn students remain in the roster file
-- The `--classroom` flag is optional for `new`, `create`, and `student-repos`; defaults to `classroom.yaml`
+- The `--classroom` flag is optional for `new`, `create`, and `clone`; defaults to `classroom.yaml`
 - The `--template` flag defaults to the assignment short name if omitted
 - The `--dry-run` flag prints the `gh api` commands that will be used
