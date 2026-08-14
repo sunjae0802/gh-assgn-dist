@@ -23,9 +23,6 @@ func TestSaveAndLoadClassroom(t *testing.T) {
 		Name:   "witcomp1000-fall26",
 		Org:    "witcomp1000",
 		Roster: "roster.csv",
-		Assignments: []Assignment{
-			{Name: "a1", Template: "witcomp1000/a1-template"},
-		},
 	}
 
 	if err := SaveClassroom(path, c); err != nil {

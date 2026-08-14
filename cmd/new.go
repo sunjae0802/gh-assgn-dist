@@ -51,10 +51,9 @@ var NewCmd = &cobra.Command{
 		}
 
 		c := &internal.Classroom{
-			Name:        classroom,
-			Org:         newOrg,
-			Roster:      newRoster,
-			Assignments: []internal.Assignment{},
+			Name:   classroom,
+			Org:    newOrg,
+			Roster: newRoster,
 		}
 		if err := internal.SaveClassroom(outFile, c); err != nil {
 			return err

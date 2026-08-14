@@ -114,26 +114,6 @@ var CreateCmd = &cobra.Command{
 			}
 		}
 
-		if !createDryRun {
-			// Save assignment to classroom file, unless already recorded
-			known := false
-			for _, a := range c.Assignments {
-				if a.Name == assgn {
-					known = true
-					break
-				}
-			}
-			if !known {
-				c.Assignments = append(c.Assignments, internal.Assignment{
-					Name:     assgn,
-					Template: template,
-				})
-				if err := internal.SaveClassroom(classroomFile, c); err != nil {
-					return err
-				}
-			}
-		}
-
 		return nil
 	},
 }

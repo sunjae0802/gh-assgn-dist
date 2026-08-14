@@ -8,16 +8,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Assignment struct {
-	Name     string `yaml:"name"`
-	Template string `yaml:"template"`
-}
-
 type Classroom struct {
-	Name        string       `yaml:"classroom"`
-	Org         string       `yaml:"org"`
-	Roster      string       `yaml:"roster"`
-	Assignments []Assignment `yaml:"assignments"`
+	Name   string `yaml:"classroom"`
+	Org    string `yaml:"org"`
+	Roster string `yaml:"roster"`
 }
 
 func LoadClassroom(path string) (*Classroom, error) {
