@@ -38,7 +38,7 @@ All GitHub operations go through `gh api`. Reference: https://cli.github.com/man
 
 Key behaviors:
 - `new`: verify org exists + user has admin access via `gh api`
-- `create`: verify template repo exists, then create per-student repos and add each student as outside collaborator with `write` role
+- `create`: verify template repo exists, then create per-student repos and add each student as outside collaborator with `write` role; safe to re-run — skips repos that already exist, still (re-)adds the collaborator
 - `clone`: clone repos if missing, pull if they already exist
 
 ## Notes
