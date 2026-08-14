@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -65,29 +66,44 @@ var CreateCmd = &cobra.Command{
 			repoName := internal.RepoName(c.Name, assgn, student.GitHub)
 			org := c.Org
 
+			exists, err := repoExists(client, org, repoName)
+			if err != nil {
+				fmt.Printf("warning: failed to check if repo %s exists: %v\n", repoName, err)
+				continue
+			}
+
 			if createDryRun {
-				fmt.Printf("gh api -X POST /repos/%s/%s/generate -f owner=%s -f name=%s -f private=true\n",
-					templateOwner, templateName, org, repoName)
+				if exists {
+					fmt.Printf("# %s/%s already exists, skipping creation\n", org, repoName)
+				} else {
+					fmt.Printf("gh api -X POST /repos/%s/%s/generate -f owner=%s -f name=%s -f private=true\n",
+						templateOwner, templateName, org, repoName)
+				}
 				fmt.Printf("gh api -X PUT /repos/%s/%s/collaborators/%s -f permission=write\n",
 					org, repoName, student.GitHub)
 				continue
 			}
 
-			// Create repo from template
-			body := map[string]interface{}{
-				"owner":   org,
-				"name":    repoName,
-				"private": true,
+			if exists {
+				fmt.Printf("%s already exists, skipping creation\n", repoName)
+			} else {
+				// Create repo from template
+				body := map[string]interface{}{
+					"owner":   org,
+					"name":    repoName,
+					"private": true,
+				}
+				bodyBytes, _ := json.Marshal(body)
+				var createdRepo struct{ FullName string `json:"full_name"` }
+				if err := client.Post(fmt.Sprintf("repos/%s/%s/generate", templateOwner, templateName), bytes.NewReader(bodyBytes), &createdRepo); err != nil {
+					fmt.Printf("warning: failed to create repo %s: %v\n", repoName, err)
+					continue
+				}
+				fmt.Printf("Created %s\n", createdRepo.FullName)
 			}
-			bodyBytes, _ := json.Marshal(body)
-			var createdRepo struct{ FullName string `json:"full_name"` }
-			if err := client.Post(fmt.Sprintf("repos/%s/%s/generate", templateOwner, templateName), bytes.NewReader(bodyBytes), &createdRepo); err != nil {
-				fmt.Printf("warning: failed to create repo %s: %v\n", repoName, err)
-				continue
-			}
-			fmt.Printf("Created %s\n", createdRepo.FullName)
 
-			// Add student as outside collaborator with write access
+			// Add student as outside collaborator with write access (idempotent,
+			// so this also repairs repos where a prior run's invite failed)
 			collabBody := map[string]string{"permission": "write"}
 			collabBytes, _ := json.Marshal(collabBody)
 			var collabResp struct{}
@@ -99,13 +115,22 @@ var CreateCmd = &cobra.Command{
 		}
 
 		if !createDryRun {
-			// Save assignment to classroom file
-			c.Assignments = append(c.Assignments, internal.Assignment{
-				Name:     assgn,
-				Template: template,
-			})
-			if err := internal.SaveClassroom(classroomFile, c); err != nil {
-				return err
+			// Save assignment to classroom file, unless already recorded
+			known := false
+			for _, a := range c.Assignments {
+				if a.Name == assgn {
+					known = true
+					break
+				}
+			}
+			if !known {
+				c.Assignments = append(c.Assignments, internal.Assignment{
+					Name:     assgn,
+					Template: template,
+				})
+				if err := internal.SaveClassroom(classroomFile, c); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -119,6 +144,20 @@ func splitRepo(repo string) (string, string, error) {
 		return "", "", fmt.Errorf("invalid repo format %q: expected owner/name", repo)
 	}
 	return owner, name, nil
+}
+
+// repoExists reports whether org/name already exists on GitHub.
+func repoExists(client *api.RESTClient, org, name string) (bool, error) {
+	var repo struct{ FullName string `json:"full_name"` }
+	err := client.Get(fmt.Sprintf("repos/%s/%s", org, name), &repo)
+	if err == nil {
+		return true, nil
+	}
+	var httpErr *api.HTTPError
+	if errors.As(err, &httpErr) && httpErr.StatusCode == 404 {
+		return false, nil
+	}
+	return false, err
 }
 
 func init() {
