@@ -66,8 +66,8 @@ var CreateCmd = &cobra.Command{
 			org := c.Org
 
 			if createDryRun {
-				fmt.Printf("gh api -X POST /orgs/%s/repos -f name=%s -f private=true -f template_repository=%s/%s\n",
-					org, repoName, templateOwner, templateName)
+				fmt.Printf("gh api -X POST /repos/%s/%s/generate -f owner=%s -f name=%s -f private=true\n",
+					templateOwner, templateName, org, repoName)
 				fmt.Printf("gh api -X PUT /repos/%s/%s/collaborators/%s -f permission=write\n",
 					org, repoName, student.GitHub)
 				continue
@@ -75,12 +75,13 @@ var CreateCmd = &cobra.Command{
 
 			// Create repo from template
 			body := map[string]interface{}{
+				"owner":   org,
 				"name":    repoName,
 				"private": true,
 			}
 			bodyBytes, _ := json.Marshal(body)
 			var createdRepo struct{ FullName string `json:"full_name"` }
-			if err := client.Post(fmt.Sprintf("orgs/%s/repos", org), bytes.NewReader(bodyBytes), &createdRepo); err != nil {
+			if err := client.Post(fmt.Sprintf("repos/%s/%s/generate", templateOwner, templateName), bytes.NewReader(bodyBytes), &createdRepo); err != nil {
 				fmt.Printf("warning: failed to create repo %s: %v\n", repoName, err)
 				continue
 			}
