@@ -34,13 +34,13 @@ gh extension install sunjae0802/gh-assgn-dist
 
 Verifies the org exists and that you have admin access, then writes the classroom file.
 
-- `--classroom` sets the output path; defaults to `classroom.yaml`.
+    $ gh assgn-dist new --org ORG --roster roster.csv CLASSROOM
 
-```bash
-$ gh assgn-dist new --org ORG --roster roster.csv CLASSROOM
-# Example:
-$ gh assgn-dist new --org witcomp1000 --roster roster.csv witcomp1000-fall26
-```
+Arguments:
+
+- `--classroom` sets the output path; defaults to `classroom.yaml`.
+- `--dry-run` still verifies the org and your admin access, then prints what would be written
+  instead of writing the classroom file.
 
 ### Distribute an assignment
 
@@ -51,26 +51,45 @@ Safe to re-run: if a student's repo already exists, creation is skipped, but the
 still (re-)added, so re-running also repairs any invite that failed on a prior run and picks up
 students who don't have a repo yet.
 
-- `--template` defaults to the assignment short name (`ASSGN`) if omitted.
+    $ gh assgn-dist create --template OWNER/REPO ASSGN
+
+Arguments:
+
+- `--template` defaults to `ORG/ASSGN` (the classroom org and the assignment short name) if omitted.
 - `--classroom` defaults to `classroom.yaml` if omitted.
 - `--dry-run` prints the `gh api` commands instead of running them.
-
-```bash
-$ gh assgn-dist create --template OWNER/REPO ASSGN
-# Example:
-$ gh assgn-dist create --template sunjae0802/cs1-a1 a1
-```
 
 ### Clone or update student repos
 
 Clones any repo that doesn't exist locally yet (into `ASSGN/CLASSROOM-ASSGN-USERNAME`); runs
 `git pull` on any that do.
 
+    $ gh assgn-dist clone ASSGN
+
+Arguments:
+
+- `--classroom` defaults to `classroom.yaml` if omitted.
+- `--dry-run` prints the `gh repo clone` / `git pull` commands instead of running them.
+
+## Example
+
 ```bash
-$ gh assgn-dist clone ASSGN
-# Example:
+# Example roster contents
+$ cat roster.csv
+name,email,github
+Sunjae Park,parks6@wit.edu,sunjae0802
+Leopard,leopard@wit.edu,leopardatwit
+
+# Create a new classroom under github.com/witcomp1000
+$ gh assgn-dist new --org witcomp1000 --roster roster.csv witcomp1000-fall26
+
+# Create a1 using github.com/sunjae0802/cs1-a1 as template repo
+$ gh assgn-dist create --template sunjae0802/cs1-a1 a1
+
+# Clone a1
 $ gh assgn-dist clone a1
 ```
+
 
 ## Development
 

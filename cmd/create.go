@@ -40,7 +40,7 @@ var CreateCmd = &cobra.Command{
 
 		template := createTemplate
 		if template == "" {
-			template = assgn
+			template = c.Org + "/" + assgn
 		}
 
 		client, err := api.DefaultRESTClient()
@@ -137,7 +137,7 @@ func repoExists(client *api.RESTClient, org, name string) (bool, error) {
 }
 
 func init() {
-	CreateCmd.Flags().StringVar(&createTemplate, "template", "", "Template repo (owner/name); defaults to assignment name")
+	CreateCmd.Flags().StringVar(&createTemplate, "template", "", "Template repo (owner/name); defaults to ORG/ASSGN")
 	CreateCmd.Flags().StringVar(&createClassroom, "classroom", "", "Classroom YAML file (default \"classroom.yaml\")")
 	CreateCmd.Flags().BoolVar(&createDryRun, "dry-run", false, "Print gh api commands without executing")
 }

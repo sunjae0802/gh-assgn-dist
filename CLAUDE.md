@@ -45,5 +45,7 @@ Key behaviors:
 
 - Withdrawn students remain in the roster file
 - The `--classroom` flag is optional for `new`, `create`, and `clone`; defaults to `classroom.yaml`
-- The `--template` flag defaults to the assignment short name if omitted
-- The `--dry-run` flag prints the `gh api` commands that will be used
+- The `--template` flag defaults to `ORG/ASSGN` (classroom org + assignment short name) if omitted
+- The `--dry-run` flag makes no changes: `create` prints the `gh api` commands it would run, `clone`
+  prints the `gh repo clone` / `git pull` commands, and `new` verifies the org then prints what it
+  would write. Read-only verification still runs in all three, so a dry run needs working `gh` auth

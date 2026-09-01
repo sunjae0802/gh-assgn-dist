@@ -12,6 +12,7 @@ import (
 )
 
 var cloneClassroom string
+var cloneDryRun bool
 
 var CloneCmd = &cobra.Command{
 	Use:   "clone ASSGN",
@@ -39,7 +40,19 @@ var CloneCmd = &cobra.Command{
 			repoName := internal.RepoName(c.Name, assgn, student.GitHub)
 			localDir := filepath.Join(assgn, repoName)
 
-			if _, err := os.Stat(localDir); os.IsNotExist(err) {
+			_, statErr := os.Stat(localDir)
+			missing := os.IsNotExist(statErr)
+
+			if cloneDryRun {
+				if missing {
+					fmt.Printf("gh repo clone %s/%s %s\n", c.Org, repoName, localDir)
+				} else {
+					fmt.Printf("git -C %s pull\n", localDir)
+				}
+				continue
+			}
+
+			if missing {
 				fmt.Printf("Cloning %s/%s...\n", c.Org, repoName)
 				out, err := exec.Command("gh", "repo", "clone", fmt.Sprintf("%s/%s", c.Org, repoName), localDir).CombinedOutput()
 				if err != nil {
@@ -68,4 +81,5 @@ func cloneWarning(org, repoName string, out []byte) string {
 
 func init() {
 	CloneCmd.Flags().StringVar(&cloneClassroom, "classroom", "", "Classroom YAML file (default \"classroom.yaml\")")
+	CloneCmd.Flags().BoolVar(&cloneDryRun, "dry-run", false, "Print the git/gh commands without executing")
 }

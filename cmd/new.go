@@ -12,6 +12,7 @@ import (
 var newOrg string
 var newRoster string
 var newClassroom string
+var newDryRun bool
 
 var NewCmd = &cobra.Command{
 	Use:   "new CLASSROOM",
@@ -59,6 +60,13 @@ var NewCmd = &cobra.Command{
 			Org:    newOrg,
 			Roster: newRoster,
 		}
+
+		if newDryRun {
+			fmt.Printf("# would write %s (classroom: %s, org: %s, roster: %s)\n",
+				outFile, c.Name, c.Org, c.Roster)
+			return nil
+		}
+
 		if err := internal.SaveClassroom(outFile, c); err != nil {
 			return err
 		}
@@ -72,6 +80,7 @@ func init() {
 	NewCmd.Flags().StringVar(&newOrg, "org", "", "GitHub organization name (required)")
 	NewCmd.Flags().StringVar(&newRoster, "roster", "", "Path to roster CSV file (required)")
 	NewCmd.Flags().StringVar(&newClassroom, "classroom", "", "Classroom YAML file to write (default \"classroom.yaml\")")
+	NewCmd.Flags().BoolVar(&newDryRun, "dry-run", false, "Verify the org, then print what would be written without writing it")
 	NewCmd.MarkFlagRequired("org")
 	NewCmd.MarkFlagRequired("roster")
 }
