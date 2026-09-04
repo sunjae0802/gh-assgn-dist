@@ -23,10 +23,10 @@ Example: `github.com/witcomp1000/witcomp1000-fall26-a1-alice`
 
 ```bash
 # Create a new classroom (verifies org exists and user has admin access)
-assgn-dist new --org ORG --roster CSVFILE CLASSROOM
+assgn-dist create --org ORG --roster CSVFILE CLASSROOM
 
-# Create an assignment (verifies template repo exists, creates student repos, adds students as outside collaborators with write role)
-assgn-dist create --template REPO --classroom CLASSROOM ASSGN
+# Distribute an assignment (verifies template repo exists, creates student repos, adds students as outside collaborators with write role)
+assgn-dist distribute --template REPO --classroom CLASSROOM ASSGN
 
 # Clone or update student repos for an assignment (into ASSGN/CLASSROOM-ASSGN-USERNAME)
 assgn-dist clone ASSGN
@@ -37,15 +37,18 @@ assgn-dist clone ASSGN
 All GitHub operations go through `gh api`. Reference: https://cli.github.com/manual/gh_api
 
 Key behaviors:
-- `new`: verify org exists + user has admin access via `gh api`
-- `create`: verify template repo exists, then create per-student repos and add each student as outside collaborator with `write` role; safe to re-run — skips repos that already exist, still (re-)adds the collaborator
+- `create`: verify org exists + user has admin access via `gh api`
+- `distribute`: verify template repo exists, then create per-student repos and add each student as outside collaborator with `write` role; safe to re-run — skips repos that already exist, still (re-)adds the collaborator
 - `clone`: clone repos if missing, pull if they already exist
 
 ## Notes
 
 - Withdrawn students remain in the roster file
-- The `--classroom` flag is optional for `new`, `create`, and `clone`; defaults to `classroom.yaml`
+- The `--classroom` flag is optional for `create`, `distribute`, and `clone`; defaults to `classroom.yaml`
 - The `--template` flag defaults to `ORG/ASSGN` (classroom org + assignment short name) if omitted
-- The `--dry-run` flag makes no changes: `create` prints the `gh api` commands it would run, `clone`
-  prints the `gh repo clone` / `git pull` commands, and `new` verifies the org then prints what it
-  would write. Read-only verification still runs in all three, so a dry run needs working `gh` auth
+- The `--only` flag on `distribute` takes a comma-separated list of GitHub usernames and skips every
+  other student; matching is case-insensitive, and omitting it distributes to the whole roster
+- The `--dry-run` flag makes no changes: `distribute` prints the `gh api` commands it would run,
+  `clone` prints the `gh repo clone` / `git pull` commands, and `create` verifies the org then
+  prints what it would write. Read-only verification still runs in all three, so a dry run needs
+  working `gh` auth

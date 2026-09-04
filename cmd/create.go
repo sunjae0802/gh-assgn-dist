@@ -1,143 +1,86 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"strings"
+	"os"
 
 	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/spf13/cobra"
 	"github.com/sunjae0802/gh-assgn-dist/internal"
 )
 
-var createTemplate string
+var createOrg string
+var createRoster string
 var createClassroom string
 var createDryRun bool
 
 var CreateCmd = &cobra.Command{
-	Use:   "create ASSGN",
-	Short: "Create student repos for an assignment",
+	Use:   "create CLASSROOM",
+	Short: "Create a new classroom",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		assgn := args[0]
-
-		classroomFile := createClassroom
-		if classroomFile == "" {
-			classroomFile = internal.DefaultClassroomFile
-		}
-
-		c, err := internal.LoadClassroom(classroomFile)
-		if err != nil {
-			return err
-		}
-
-		students, err := internal.LoadRoster(c.Roster)
-		if err != nil {
-			return err
-		}
-
-		template := createTemplate
-		if template == "" {
-			template = c.Org + "/" + assgn
-		}
+		classroom := args[0]
 
 		client, err := api.DefaultRESTClient()
 		if err != nil {
 			return err
 		}
 
-		// Verify template repo exists
-		templateOwner, templateName, err := splitRepo(template)
-		if err != nil {
+		// Verify org exists
+		var org struct{ Login string }
+		if err := client.Get(fmt.Sprintf("orgs/%s", createOrg), &org); err != nil {
+			return fmt.Errorf("org %q not found: %w", createOrg, err)
+		}
+
+		// Get authenticated user
+		var user struct{ Login string }
+		if err := client.Get("user", &user); err != nil {
 			return err
 		}
-		var templateRepo struct{ FullName string `json:"full_name"` }
-		if err := client.Get(fmt.Sprintf("repos/%s/%s", templateOwner, templateName), &templateRepo); err != nil {
-			return fmt.Errorf("template repo %q not found: %w", template, err)
+
+		// Verify user has admin access to org
+		var membership struct{ Role string }
+		if err := client.Get(fmt.Sprintf("orgs/%s/memberships/%s", createOrg, user.Login), &membership); err != nil {
+			return fmt.Errorf("could not verify admin access to org %q: %w", createOrg, err)
+		}
+		if membership.Role != "admin" {
+			return fmt.Errorf("user %q does not have admin access to org %q (role: %s)", user.Login, createOrg, membership.Role)
 		}
 
-		for _, student := range students {
-			repoName := internal.RepoName(c.Name, assgn, student.GitHub)
-			org := c.Org
-
-			exists, err := repoExists(client, org, repoName)
-			if err != nil {
-				fmt.Printf("warning: failed to check if repo %s exists: %v\n", repoName, err)
-				continue
-			}
-
-			if createDryRun {
-				if exists {
-					fmt.Printf("# %s/%s already exists, skipping creation\n", org, repoName)
-				} else {
-					fmt.Printf("gh api -X POST /repos/%s/%s/generate -f owner=%s -f name=%s -f private=true\n",
-						templateOwner, templateName, org, repoName)
-				}
-				fmt.Printf("gh api -X PUT /repos/%s/%s/collaborators/%s -f permission=write\n",
-					org, repoName, student.GitHub)
-				continue
-			}
-
-			if exists {
-				fmt.Printf("%s already exists, skipping creation\n", repoName)
-			} else {
-				// Create repo from template
-				body := map[string]interface{}{
-					"owner":   org,
-					"name":    repoName,
-					"private": true,
-				}
-				bodyBytes, _ := json.Marshal(body)
-				var createdRepo struct{ FullName string `json:"full_name"` }
-				if err := client.Post(fmt.Sprintf("repos/%s/%s/generate", templateOwner, templateName), bytes.NewReader(bodyBytes), &createdRepo); err != nil {
-					fmt.Printf("warning: failed to create repo %s: %v\n", repoName, err)
-					continue
-				}
-				fmt.Printf("Created %s\n", createdRepo.FullName)
-			}
-
-			// Add student as outside collaborator with write access (idempotent,
-			// so this also repairs repos where a prior run's invite failed)
-			collabBody := map[string]string{"permission": "write"}
-			collabBytes, _ := json.Marshal(collabBody)
-			var collabResp struct{}
-			if err := client.Put(fmt.Sprintf("repos/%s/%s/collaborators/%s", org, repoName, student.GitHub), bytes.NewReader(collabBytes), &collabResp); err != nil {
-				fmt.Printf("warning: failed to add collaborator %s to %s: %v\n", student.GitHub, repoName, err)
-			} else {
-				fmt.Printf("Added %s as collaborator on %s\n", student.GitHub, repoName)
-			}
+		outFile := createClassroom
+		if outFile == "" {
+			outFile = internal.DefaultClassroomFile
+		}
+		if _, err := os.Stat(outFile); err == nil {
+			return fmt.Errorf("%s already exists", outFile)
 		}
 
+		c := &internal.Classroom{
+			Name:   classroom,
+			Org:    createOrg,
+			Roster: createRoster,
+		}
+
+		if createDryRun {
+			fmt.Printf("# would write %s (classroom: %s, org: %s, roster: %s)\n",
+				outFile, c.Name, c.Org, c.Roster)
+			return nil
+		}
+
+		if err := internal.SaveClassroom(outFile, c); err != nil {
+			return err
+		}
+
+		fmt.Printf("Created %s\n", outFile)
 		return nil
 	},
 }
 
-func splitRepo(repo string) (string, string, error) {
-	owner, name, ok := strings.Cut(repo, "/")
-	if !ok {
-		return "", "", fmt.Errorf("invalid repo format %q: expected owner/name", repo)
-	}
-	return owner, name, nil
-}
-
-// repoExists reports whether org/name already exists on GitHub.
-func repoExists(client *api.RESTClient, org, name string) (bool, error) {
-	var repo struct{ FullName string `json:"full_name"` }
-	err := client.Get(fmt.Sprintf("repos/%s/%s", org, name), &repo)
-	if err == nil {
-		return true, nil
-	}
-	var httpErr *api.HTTPError
-	if errors.As(err, &httpErr) && httpErr.StatusCode == 404 {
-		return false, nil
-	}
-	return false, err
-}
-
 func init() {
-	CreateCmd.Flags().StringVar(&createTemplate, "template", "", "Template repo (owner/name); defaults to ORG/ASSGN")
-	CreateCmd.Flags().StringVar(&createClassroom, "classroom", "", "Classroom YAML file (default \"classroom.yaml\")")
-	CreateCmd.Flags().BoolVar(&createDryRun, "dry-run", false, "Print gh api commands without executing")
+	CreateCmd.Flags().StringVar(&createOrg, "org", "", "GitHub organization name (required)")
+	CreateCmd.Flags().StringVar(&createRoster, "roster", "", "Path to roster CSV file (required)")
+	CreateCmd.Flags().StringVar(&createClassroom, "classroom", "", "Classroom YAML file to write (default \"classroom.yaml\")")
+	CreateCmd.Flags().BoolVar(&createDryRun, "dry-run", false, "Verify the org, then print what would be written without writing it")
+	CreateCmd.MarkFlagRequired("org")
+	CreateCmd.MarkFlagRequired("roster")
 }

@@ -14,8 +14,8 @@ func main() {
 		Short: "GitHub Classroom assignment distribution tool",
 	}
 
-	root.AddCommand(cmd.NewCmd)
 	root.AddCommand(cmd.CreateCmd)
+	root.AddCommand(cmd.DistributeCmd)
 	root.AddCommand(cmd.CloneCmd)
 
 	if err := root.Execute(); err != nil {

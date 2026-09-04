@@ -40,7 +40,7 @@ gh extension install sunjae0802/gh-assgn-dist
 
 Verifies the org exists and that you have admin access, then writes the classroom file.
 
-    $ gh assgn-dist new --org ORG --roster roster.csv CLASSROOM
+    $ gh assgn-dist create --org ORG --roster roster.csv CLASSROOM
 
 Arguments:
 
@@ -57,12 +57,15 @@ the template and adds the student as an outside collaborator with `write` access
 still (re-)added, so re-running also repairs any invite that failed on a prior run and picks up
 students who don't have a repo yet.
 
-    $ gh assgn-dist create --template OWNER/REPO ASSGN
+    $ gh assgn-dist distribute --template OWNER/REPO ASSGN
 
 Arguments:
 
 - `--template` defaults to `ORG/ASSGN` (the classroom org and the assignment short name) if omitted.
 - `--classroom` defaults to `classroom.yaml` if omitted.
+- `--only` limits distribution to a comma-separated list of GitHub usernames (for example
+  `--only alice,bob`); everyone else in the roster is skipped. Matching is case-insensitive, and a
+  username that isn't in the roster is reported as a warning. Omit it to distribute to everyone.
 - `--dry-run` prints the `gh api` commands instead of running them.
 
 ### Clone or update student repos
@@ -88,10 +91,13 @@ John Doe,jdoe@email.com,jdoe11atwit
 Jane Austen,jausten@email.com,jaustenatwit
 
 # Create a new classroom under github.com/witcomp1000
-$ gh assgn-dist new --org witcomp1000 --roster roster.csv witcomp1000-fall26
+$ gh assgn-dist create --org witcomp1000 --roster roster.csv witcomp1000-fall26
 
-# Create a1 using github.com/sunjae0802/cs1-a1 as template repo
-$ gh assgn-dist create --template sunjae0802/cs1-a1 a1
+# Distribute a1 using github.com/sunjae0802/cs1-a1 as template repo
+$ gh assgn-dist distribute --template sunjae0802/cs1-a1 a1
+
+# Distribute a1 to just one student (for example, a late add)
+$ gh assgn-dist distribute --template sunjae0802/cs1-a1 --only leopardatwit a1
 
 # Clone a1
 $ gh assgn-dist clone a1
