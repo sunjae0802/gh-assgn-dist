@@ -2,7 +2,13 @@
 
 A [GitHub CLI](https://cli.github.com/) extension that's a minimal reproduction of GitHub Classroom:
 create a classroom, distribute an assignment as private per-student repos, and keep local clones up
-to date.
+to date. It does NOT include an autograder; I use Gradescope for this.
+
+This extension assumes that you have a *private GitHub organization*, and you want to create private
+repositories for each student. It uses a template repository as the base, makes N private copies of
+the repository, and adds each student as an "external collaborator" with *write* permissions. This
+ensures students will not be able to view each other's repo, but you as the instructor and the
+student can.
 
 ## How it works
 
@@ -47,7 +53,7 @@ Arguments:
 Verifies the template repo exists, then for each student in the roster creates a private repo from
 the template and adds the student as an outside collaborator with `write` access.
 
-Safe to re-run: if a student's repo already exists, creation is skipped, but the collaborator is
+**Safe to re-run**: if a student's repo already exists, creation is skipped, but the collaborator is
 still (re-)added, so re-running also repairs any invite that failed on a prior run and picks up
 students who don't have a repo yet.
 
@@ -77,8 +83,9 @@ Arguments:
 # Example roster contents
 $ cat roster.csv
 name,email,github
-Sunjae Park,parks6@wit.edu,sunjae0802
-Leopard,leopard@wit.edu,leopardatwit
+Sunjae Park,sunjae@email.com,sunjaeatwit
+John Doe,jdoe@email.com,jdoe11atwit
+Jane Austen,jausten@email.com,jaustenatwit
 
 # Create a new classroom under github.com/witcomp1000
 $ gh assgn-dist new --org witcomp1000 --roster roster.csv witcomp1000-fall26
