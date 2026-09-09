@@ -26,7 +26,7 @@ Example: `github.com/witcomp1000/witcomp1000-fall26-a1-alice`
 
 ```bash
 # Create a new classroom (verifies org exists and user has admin access)
-assgn-dist create --name CLASSROOM --org ORG --roster CSVFILE
+assgn-dist create --name CLASSROOM --org ORG [--roster CSVFILE]
 
 # Distribute an assignment (verifies template repo exists, creates student repos, adds students as outside collaborators with write role)
 assgn-dist distribute --template REPO --classroom CLASSROOM.yaml ASSGN
@@ -40,7 +40,7 @@ assgn-dist clone ASSGN
 All GitHub operations go through `gh api`. Reference: https://cli.github.com/manual/gh_api
 
 Key behaviors:
-- `create`: verify org exists + user has admin access via `gh api`
+- `create`: read and validate the roster (must exist, must list a student), verify org exists + user has admin access via `gh api`, then write the classroom file and report the student count
 - `distribute`: verify template repo exists, then create per-student repos and add each student as outside collaborator with `write` role; safe to re-run — skips repos that already exist, still (re-)adds the collaborator
 - `clone`: clone repos if missing, pull if they already exist
 
@@ -49,6 +49,9 @@ Key behaviors:
 - Withdrawn students remain in the roster file
 - The `--classroom` flag is optional for `create`, `distribute`, and `clone`; defaults to `classroom.yaml`. `create` writes it, the others read it
 - `create` takes no positional argument; the classroom name comes from the required `--name` flag
+- The `--roster` flag on `create` is optional and defaults to `roster.csv`; the resolved path is
+  stored in the classroom file, which is what `distribute` and `clone` read. `create` reads the
+  roster first, before any network call, so a bad path fails immediately
 - The `--template` flag defaults to `ORG/ASSGN` (classroom org + assignment short name) if omitted
 - The `--only` flag on `distribute` takes a comma-separated list of GitHub usernames and skips every
   other student; matching is case-insensitive, and omitting it distributes to the whole roster

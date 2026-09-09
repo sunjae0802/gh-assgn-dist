@@ -58,14 +58,19 @@ keep it short — it is the leading third of every repo name your students will 
 
 ### Create a classroom
 
-Verifies the org exists and that you have admin access, then writes the classroom file.
+Reads the roster, verifies the org exists and that you have admin access, then writes the classroom
+file and reports how many students it found.
 
-    $ gh assgn-dist create --name CLASSROOM --org ORG --roster roster.csv
+    $ gh assgn-dist create --name CLASSROOM --org ORG
 
 Arguments:
 
-- `--name`, `--org`, and `--roster` are required. `--name` is the classroom name that prefixes every
-  student repo; it is stored in the classroom file and never passed again.
+- `--name` and `--org` are required. `--name` is the classroom name that prefixes every student
+  repo; it is stored in the classroom file and never passed again.
+- `--roster` is the path to the roster CSV; defaults to `roster.csv`. It must exist and list at
+  least one student — a missing or empty roster stops the command before anything is written.
+  Whatever it resolves to is written into the classroom file, so `distribute` and `clone` read the
+  same roster afterwards.
 - `--classroom` sets the classroom file to write; defaults to `classroom.yaml`. Pass it to keep
   more than one classroom side by side (for example `--classroom cs2.yaml`).
 - `--dry-run` still verifies the org and your admin access, then prints what would be written
@@ -116,7 +121,8 @@ John Doe,jdoe@email.com,jdoe11atwit
 Jane Austen,jausten@email.com,jaustenatwit
 
 # Create a new classroom under github.com/witcomp1000
-$ gh assgn-dist create --name witcomp1000-fall26 --org witcomp1000 --roster roster.csv
+$ gh assgn-dist create --name witcomp1000-fall26 --org witcomp1000
+Created classroom.yaml (3 students in roster.csv)
 
 # Distribute a1 using github.com/sunjae0802/cs1-a1 as template repo
 $ gh assgn-dist distribute --template sunjae0802/cs1-a1 a1

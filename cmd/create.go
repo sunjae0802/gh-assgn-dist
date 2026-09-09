@@ -20,6 +20,21 @@ var CreateCmd = &cobra.Command{
 	Short: "Create a new classroom",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		roster := createRoster
+		if roster == "" {
+			roster = internal.DefaultRosterFile
+		}
+
+		// Verify the roster is readable before doing any network work, so a
+		// typo'd path fails here rather than at the first distribute
+		students, err := internal.LoadRoster(roster)
+		if err != nil {
+			return fmt.Errorf("could not read roster %q: %w", roster, err)
+		}
+		if len(students) == 0 {
+			return fmt.Errorf("roster %q has no students", roster)
+		}
+
 		client, err := api.DefaultRESTClient()
 		if err != nil {
 			return err
@@ -57,12 +72,12 @@ var CreateCmd = &cobra.Command{
 		c := &internal.Classroom{
 			Name:   createName,
 			Org:    createOrg,
-			Roster: createRoster,
+			Roster: roster,
 		}
 
 		if createDryRun {
-			fmt.Printf("# would write %s (classroom: %s, org: %s, roster: %s)\n",
-				outFile, c.Name, c.Org, c.Roster)
+			fmt.Printf("# would write %s (classroom: %s, org: %s, roster: %s with %s)\n",
+				outFile, c.Name, c.Org, c.Roster, pluralStudents(len(students)))
 			return nil
 		}
 
@@ -70,18 +85,25 @@ var CreateCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Created %s\n", outFile)
+		fmt.Printf("Created %s (%s in %s)\n", outFile, pluralStudents(len(students)), c.Roster)
 		return nil
 	},
+}
+
+// pluralStudents renders a student count with the right noun, e.g. "1 student".
+func pluralStudents(n int) string {
+	if n == 1 {
+		return "1 student"
+	}
+	return fmt.Sprintf("%d students", n)
 }
 
 func init() {
 	CreateCmd.Flags().StringVar(&createName, "name", "", "Classroom name, used as the student repo prefix (required)")
 	CreateCmd.Flags().StringVar(&createOrg, "org", "", "GitHub organization name (required)")
-	CreateCmd.Flags().StringVar(&createRoster, "roster", "", "Path to roster CSV file (required)")
+	CreateCmd.Flags().StringVar(&createRoster, "roster", "", "Path to roster CSV file (default \"roster.csv\")")
 	CreateCmd.Flags().StringVar(&createClassroom, "classroom", "", "Classroom YAML file to write (default \"classroom.yaml\")")
 	CreateCmd.Flags().BoolVar(&createDryRun, "dry-run", false, "Verify the org, then print what would be written without writing it")
 	CreateCmd.MarkFlagRequired("name")
 	CreateCmd.MarkFlagRequired("org")
-	CreateCmd.MarkFlagRequired("roster")
 }

@@ -6,6 +6,9 @@ import (
 	"os"
 )
 
+// DefaultRosterFile is the roster file name used when --roster is not given.
+const DefaultRosterFile = "roster.csv"
+
 type Student struct {
 	Name   string
 	Email  string
