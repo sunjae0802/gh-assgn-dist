@@ -9,18 +9,17 @@ import (
 	"github.com/sunjae0802/gh-assgn-dist/internal"
 )
 
+var createName string
 var createOrg string
 var createRoster string
 var createClassroom string
 var createDryRun bool
 
 var CreateCmd = &cobra.Command{
-	Use:   "create CLASSROOM",
+	Use:   "create",
 	Short: "Create a new classroom",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		classroom := args[0]
-
 		client, err := api.DefaultRESTClient()
 		if err != nil {
 			return err
@@ -56,7 +55,7 @@ var CreateCmd = &cobra.Command{
 		}
 
 		c := &internal.Classroom{
-			Name:   classroom,
+			Name:   createName,
 			Org:    createOrg,
 			Roster: createRoster,
 		}
@@ -77,10 +76,12 @@ var CreateCmd = &cobra.Command{
 }
 
 func init() {
+	CreateCmd.Flags().StringVar(&createName, "name", "", "Classroom name, used as the student repo prefix (required)")
 	CreateCmd.Flags().StringVar(&createOrg, "org", "", "GitHub organization name (required)")
 	CreateCmd.Flags().StringVar(&createRoster, "roster", "", "Path to roster CSV file (required)")
 	CreateCmd.Flags().StringVar(&createClassroom, "classroom", "", "Classroom YAML file to write (default \"classroom.yaml\")")
 	CreateCmd.Flags().BoolVar(&createDryRun, "dry-run", false, "Verify the org, then print what would be written without writing it")
+	CreateCmd.MarkFlagRequired("name")
 	CreateCmd.MarkFlagRequired("org")
 	CreateCmd.MarkFlagRequired("roster")
 }
