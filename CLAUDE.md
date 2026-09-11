@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Files
 
 - **Classroom file**: `classroom.yaml` by default (override with `--classroom`) — stores classroom name, GitHub org, and roster filename; one file per classroom
-- **Roster file**: CSV with columns: name, email, github username
+- **Roster file**: CSV located by header, not by position — a `github` column is required (matched case-insensitively, so `GitHub`/`Github`/`github`), `name` and `email` are optional, and column order is free. Blank rows are skipped silently; a row with a name or email but no username is skipped with a warning citing its line. `LoadRoster` returns those warnings for the caller to print
 
 ### Repo naming convention
 

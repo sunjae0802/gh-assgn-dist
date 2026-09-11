@@ -31,9 +31,12 @@ var CloneCmd = &cobra.Command{
 			return err
 		}
 
-		students, err := internal.LoadRoster(c.Roster)
+		students, rosterWarnings, err := internal.LoadRoster(c.Roster)
 		if err != nil {
 			return err
+		}
+		for _, w := range rosterWarnings {
+			fmt.Printf("warning: %s\n", w)
 		}
 
 		for _, student := range students {

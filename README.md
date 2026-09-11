@@ -25,8 +25,11 @@ gh extension install sunjae0802/gh-assgn-dist
 
 ## Concepts
 
-- **Roster file** — a CSV with columns `name,email,github`. If a student is added later, just add a
-  new row; if a student withdraws, just delete the row
+- **Roster file** — a CSV whose header names a `github` column (`GitHub` and `Github` work too);
+  `name` and `email` are used when present, and columns may appear in any order. A roster with no
+  GitHub column is an error. Blank rows are skipped, and a row that names someone but leaves the
+  GitHub cell empty is skipped with a warning naming the line. If a student is added later, just add
+  a new row; if a student withdraws, just delete the row
 - **Classroom name** — set once with `--name` and stored in the classroom file; it is used as the
   prefix on every student repo this classroom creates. An example would be `witcomp1000-fall26`
 - **Classroom file** (`classroom.yaml` by default; override with `--classroom`) — created by this
@@ -115,7 +118,7 @@ Arguments:
 ```bash
 # Example roster contents
 $ cat roster.csv
-name,email,github
+Name,Email,GitHub
 Sunjae Park,sunjae@email.com,sunjaeatwit
 John Doe,jdoe@email.com,jdoe11atwit
 Jane Austen,jausten@email.com,jaustenatwit

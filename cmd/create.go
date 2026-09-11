@@ -27,9 +27,12 @@ var CreateCmd = &cobra.Command{
 
 		// Verify the roster is readable before doing any network work, so a
 		// typo'd path fails here rather than at the first distribute
-		students, err := internal.LoadRoster(roster)
+		students, rosterWarnings, err := internal.LoadRoster(roster)
 		if err != nil {
 			return fmt.Errorf("could not read roster %q: %w", roster, err)
+		}
+		for _, w := range rosterWarnings {
+			fmt.Printf("warning: %s\n", w)
 		}
 		if len(students) == 0 {
 			return fmt.Errorf("roster %q has no students", roster)
